@@ -115,7 +115,7 @@ func (m UserModel) GetByEmail(email string) (*User, error) {
 	query := `
 	SELECT id, created_at, name, email, password_hash, activated, version
 	FROM users
-	WHERE email = S1`
+	WHERE email = $1`
 
 	var user User
 
