@@ -13,7 +13,8 @@ import (
 )
 
 var (
-	ErrDuplicateEmail = errors.New("duplicate email")
+	ErrDuplicateEmail     = errors.New("duplicate email")
+	ErrInvalidCredentials = errors.New("invalid credentials")
 )
 
 var AnonymousUser = &User{}
