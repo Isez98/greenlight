@@ -11,7 +11,7 @@ type UserModel_Mock struct {
 	DB *sql.DB
 }
 
-func (m *UserModel_Mock) GetByEmail(email string) (data.User, error) {
+func (m UserModel_Mock) GetByEmail(email string) (*data.User, error) {
 	mockUser := data.User{
 		ID:        1,
 		Name:      "John Doe",
@@ -27,10 +27,10 @@ func (m *UserModel_Mock) GetByEmail(email string) (data.User, error) {
 	// 	return data.User{}, err
 	// }
 
-	return mockUser, nil
+	return &mockUser, nil
 }
 
-func (m *UserModel_Mock) GetForToken(tokenscope string, TokenPlaintext string) (data.User, error) {
+func (m UserModel_Mock) GetForToken(tokenscope string, TokenPlaintext string) (*data.User, error) {
 	mockUser := data.User{
 		ID:        1,
 		Name:      "John Doe",
@@ -40,9 +40,10 @@ func (m *UserModel_Mock) GetForToken(tokenscope string, TokenPlaintext string) (
 		Version:   1,
 		Password:  data.AnonymousUser.Password,
 	}
-	return mockUser, nil
+	return &mockUser, nil
 }
-func (m *UserModel_Mock) Insert(user data.User) error {
+
+func (m UserModel_Mock) Insert(user *data.User) error {
 	switch user.Email {
 	case "dupe@example.com":
 		return data.ErrDuplicateEmail
@@ -51,7 +52,7 @@ func (m *UserModel_Mock) Insert(user data.User) error {
 	}
 }
 
-func (m *UserModel_Mock) Update(user data.User) error {
+func (m UserModel_Mock) Update(user *data.User) error {
 	return nil
 }
 

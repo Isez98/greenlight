@@ -34,6 +34,13 @@ type password struct {
 	hash      []byte
 }
 
+type UserModelInterface interface {
+	Insert(user *User) error
+	GetByEmail(email string) (*User, error)
+	Update(user *User) error
+	GetForToken(tokenscope, TokenPlaintext string) (*User, error)
+}
+
 type UserModel struct {
 	DB *sql.DB
 }

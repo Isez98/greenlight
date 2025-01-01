@@ -8,9 +8,9 @@ import (
 
 func TestModels_Mock(db *sql.DB) data.Models {
 	return data.Models{
-		// Movies:      MovieModel{DB: db},
-		// Permissions: PermissionModel{DB: db},
-		// Tokens:      TokenModel{DB: db},
-		// Users:       UserModel_Mock{DB: db},
+		Movies:      MovieModel_Mock{DB: db},
+		Permissions: PermissionModel_Mock{DB: db},
+		Tokens:      TokenModel_Mock{DB: db},
+		Users:       UserModel_Mock{DB: db},
 	}
 }

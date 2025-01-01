@@ -26,6 +26,14 @@ type MovieModel struct {
 	DB *sql.DB
 }
 
+type MovieModelInterface interface {
+	Insert(movie *Movie) error
+	Get(id int64) (*Movie, error)
+	Update(movie *Movie) error
+	Delete(id int64) error
+	GetAll(title string, genres []string, filets Filters) ([]*Movie, Metadata, error)
+}
+
 func (m MovieModel) Insert(movie *Movie) error {
 	query := `
 		INSERT INTO movies (title, year, runtime, genres)

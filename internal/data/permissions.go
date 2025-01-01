@@ -19,6 +19,11 @@ func (p Permissions) Include(code string) bool {
 	return false
 }
 
+type PermissionModelInterface interface {
+	GetAllForUser(userID int64) (Permissions, error)
+	AddForUser(userID int64, codes ...string) error
+}
+
 type PermissionModel struct {
 	DB *sql.DB
 }
