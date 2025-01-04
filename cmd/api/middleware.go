@@ -244,14 +244,14 @@ func (mw *metricsResponseWriter) Unwrap() http.ResponseWriter {
 	return mw.wrapped
 }
 
-func (app *application) metrics(next http.Handler) http.Handler {
-	var (
-		totalRequestsReceived           = expvar.NewInt("total_requests_received")
-		totalResponsesSent              = expvar.NewInt("total_responses_sent")
-		totalProcessingTimeMicroseconds = expvar.NewInt("total_processing_time_μs")
-		totalResponsesSentByStatus      = expvar.NewMap("total_responses_sent_by_status")
-	)
+var (
+	totalRequestsReceived           = expvar.NewInt("total_requests_received")
+	totalResponsesSent              = expvar.NewInt("total_responses_sent")
+	totalProcessingTimeMicroseconds = expvar.NewInt("total_processing_time_μs")
+	totalResponsesSentByStatus      = expvar.NewMap("total_responses_sent_by_status")
+)
 
+func (app *application) metrics(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 

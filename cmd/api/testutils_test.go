@@ -2,41 +2,23 @@ package main
 
 import (
 	"bytes"
-	"flag"
 	"io"
 	"log/slog"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
-	"strings"
 	"testing"
-	"time"
 
 	"greenlight.isez.dev/internal/data/mocks"
 )
 
 func newTestApplication(t *testing.T) *application {
-	var cfg config
-	flag.StringVar(&cfg.env, "env", "development", "Environment (development|staging|production)")
-
-	flag.IntVar(&cfg.db.maxOpenConns, "db-max-open-conns", 25, "PostgreSQL max open connections")
-	flag.IntVar(&cfg.db.maxIdleConns, "db-max-idle-conns", 25, "PostgreSQL max idle connections")
-	flag.DurationVar(&cfg.db.maxIdleTime, "db-max-idle-time", 15*time.Minute, "PostgreSQL max connection idle time")
-
-	flag.Float64Var(&cfg.limiter.rps, "limiter-rps", 2, "Rate limiter maximum requests per second")
-	flag.IntVar(&cfg.limiter.burst, "limiter-burst", 4, "Rate limiter maximum burst")
-	flag.BoolVar(&cfg.limiter.enabled, "limiter-enabled", true, "Enable rate limiter")
-
-	flag.Func("cors-trusted-origins", "Trusted CORS origins (space separated)", func(val string) error {
-		cfg.cors.trustedOrigins = strings.Fields(val)
-		return nil
-	})
-
-	flag.Parse()
 
 	return &application{
+		config: config{
+			env: "development",
+		},
 		logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
-		config: cfg,
 		models: mocks.TestModels_Mock(),
 	}
 }

@@ -58,3 +58,9 @@ audit:
 	staticcheck ./...
 	@echo 'Running tests...'
 	go test -race -vet=off ./...
+
+## test: run suite of tests with base environment variables
+.PHONY: full-test
+full-test:
+	@echo 'Running full test suite...'
+	go test -v ./cmd/api
