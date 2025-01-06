@@ -59,8 +59,14 @@ audit:
 	@echo 'Running tests...'
 	go test -race -vet=off ./...
 
-## test: run suite of tests with base environment variables
-.PHONY: full-test
-full-test:
+## test: run suite of End-to-End tests with base environment variables
+.PHONY: api-test
+api-test:
 	@echo 'Running full test suite...'
-	go test -v ./cmd/api
+	go test -v ./cmd/api -db-dsn=${TEST_GREENLIGHT_DB}
+
+## test: run suite of integration tests with base environment variables
+.PHONY: int-test
+int-test:
+	@echo 'Running full test suite...'
+	go test -v ./cmd/api -db-dsn=${TEST_GREENLIGHT_DB}

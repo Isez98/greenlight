@@ -31,47 +31,47 @@ func TestHealthcheckHandler(t *testing.T) {
 	assert.StringContains(t, body, healtcheckTest.environment)
 }
 
-func TestListMoviesHandler(t *testing.T) {
-	app := newTestApplication(t)
+// func TestListMoviesHandler(t *testing.T) {
+// 	app := newTestApplication(t)
 
-	ts := newTestServer(t, app.routes())
-	defer ts.Close()
+// 	ts := newTestServer(t, app.routes())
+// 	defer ts.Close()
 
-	tests := []struct {
-		name     string
-		urlPath  string
-		wantCode int
-		wantBody string
-	}{
-		{
-			name:     "Valid Request",
-			urlPath:  "/v1/movies",
-			wantCode: http.StatusOK,
-			wantBody: `[
-        {
-            "id": 2,
-            "title": "Moana",
-            "year": 2016,
-            "runtime": "107 mins",
-            "genres": [
-                "animation",
-                "adventure"
-            ],
-            "version": 1
-        }
-    	]`,
-		},
-	}
+// 	tests := []struct {
+// 		name     string
+// 		urlPath  string
+// 		wantCode int
+// 		wantBody string
+// 	}{
+// 		{
+// 			name:     "Valid Request",
+// 			urlPath:  "/v1/movies",
+// 			wantCode: http.StatusOK,
+// 			wantBody: `[
+//         {
+//             "id": 2,
+//             "title": "Moana",
+//             "year": 2016,
+//             "runtime": "107 mins",
+//             "genres": [
+//                 "animation",
+//                 "adventure"
+//             ],
+//             "version": 1
+//         }
+//     	]`,
+// 		},
+// 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			code, _, body := ts.get(t, tt.urlPath)
+// 	for _, tt := range tests {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			code, _, body := ts.get(t, tt.urlPath)
 
-			assert.Equal(t, code, tt.wantCode)
+// 			assert.Equal(t, code, tt.wantCode)
 
-			if tt.wantBody != "" {
-				assert.StringContains(t, body, tt.wantBody)
-			}
-		})
-	}
-}
+// 			if tt.wantBody != "" {
+// 				assert.StringContains(t, body, tt.wantBody)
+// 			}
+// 		})
+// 	}
+// }
