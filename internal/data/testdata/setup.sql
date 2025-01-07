@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS movies (
+CREATE TABLE IF NOT EXISTS public.movies (
   id bigserial PRIMARY KEY,  
   created_at timestamp(0) with time zone NOT NULL DEFAULT NOW(),
   title text NOT NULL,
@@ -14,7 +14,9 @@ ALTER TABLE movies ADD CONSTRAINT movies_year_check CHECK (year BETWEEN 1888 AND
 
 ALTER TABLE movies ADD CONSTRAINT genres_length_check CHECK (array_length(genres, 1) BETWEEN 1 AND 5);
 
-CREATE TABLE IF NOT EXISTS users (
+CREATE EXTENSION IF NOT EXISTS citext;
+
+CREATE TABLE IF NOT EXISTS public.users (
   id bigserial PRIMARY KEY,
   created_at timestamp(0) with time zone NOT NULL DEFAULT NOW(),
   name text NOT NULL,
@@ -50,11 +52,13 @@ VALUES
   ('movies:read'),
   ('movies:write');
 
-INSERT INTO movies (title, year, runtime, genres) VALUES (
+INSERT INTO movies (id, title, year, runtime, genres, version) VALUES (
+  1,
 'Black Panther',
-'2018',
-'134 mins',
-'{"action", "adventure"}'
+2018,
+'134',
+'{"action", "adventure"}',
+1
 );
 
 INSERT INTO users (name, email, password_hash, activated) VALUES (

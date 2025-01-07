@@ -69,4 +69,4 @@ api-test:
 .PHONY: int-test
 int-test:
 	@echo 'Running full test suite...'
-	go test -v ./cmd/api -db-dsn=${TEST_GREENLIGHT_DB}
+	go test -v ./internal/data/ -db-dsn=${TEST_GREENLIGHT_DB}

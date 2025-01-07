@@ -7,15 +7,16 @@ import (
 	"testing"
 )
 
+var db_dsn string
+
 func TestMain(m *testing.M) {
-	var db_dsn string
 	flag.StringVar(&db_dsn, "db-dsn", os.Getenv("TEST_DB_DSN"), "Test DSN")
 	flag.Parse()
-	os.Exit(m.Run())
+	m.Run()
 }
 
 func newTestDB(t *testing.T) *sql.DB {
-	db, err := sql.Open("postgres", os.Getenv("TEST_DB_DSN"))
+	db, err := sql.Open("postgres", db_dsn)
 	if err != nil {
 		t.Fatal(err)
 	}
