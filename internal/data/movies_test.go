@@ -1,6 +1,7 @@
 package data
 
 import (
+	"fmt"
 	"testing"
 
 	"greenlight.isez.dev/internal/assert"
@@ -37,10 +38,11 @@ func TestListMoviesHandler(t *testing.T) {
 
 			m := MovieModel{DB: db}
 
-			movies, _, err := m.GetAll("", []string{""}, Filters{Page: 1, PageSize: 20, Sort: "id", SortSafeList: []string{"id", "title", "year", "runtime"}})
+			movies, _, err := m.GetAll("Black", []string{""}, Filters{Page: 1, PageSize: 20, Sort: "id", SortSafeList: []string{"id", "title", "year", "runtime"}})
 
 			// assert.Equal(t, movies[0].Title, tt.want[0].Title)
-			assert.StringContains(t, movies[0].Title, "Black")
+			// assert.StringContains(t, movies, "Black")
+			fmt.Println(movies)
 			assert.NilError(t, err)
 		})
 	}

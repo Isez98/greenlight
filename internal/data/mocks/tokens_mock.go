@@ -53,3 +53,8 @@ func (m TokenModel_Mock) Insert(token *data.Token) error {
 func (m TokenModel_Mock) DeleteAllForUser(scope string, userID int64) error {
 	return nil
 }
+
+func (m TokenModel_Mock) ValidateToken(tokenString string) (bool, error) {
+	return false, nil
+
+}

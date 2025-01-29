@@ -51,10 +51,38 @@ func ValidateTokenPlaintext(v *validator.Validator, tokenPlaintext string) {
 	v.Check(len(tokenPlaintext) == 26, "token", "must be 26 bytes long")
 }
 
+func (m TokenModel) ValidateToken(tokenPlaintext string) (bool, error) {
+	tokenHash := sha256.Sum256([]byte(tokenPlaintext))
+
+	query := `
+	SELECT EXISTS(
+	SELECT 1 
+	FROM tokens
+	WHERE hash = $1
+	AND expiry > $2)`
+
+	args := []any{tokenHash[:], time.Now()}
+
+	var valid bool
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := m.DB.QueryRowContext(ctx, query, args...).Scan(
+		&valid,
+	)
+
+	if err != nil {
+		return valid, ErrRecordNotFound
+	}
+	return valid, nil
+}
+
 type TokenModelInterface interface {
 	New(userID int64, ttl time.Duration, scope string) (*Token, error)
 	Insert(token *Token) error
 	DeleteAllForUser(scope string, userID int64) error
+	ValidateToken(tokenString string) (bool, error)
 }
 
 type TokenModel struct {
