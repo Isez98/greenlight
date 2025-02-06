@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"net/http"
+	"strings"
 	"time"
 
 	"greenlight.isez.dev/internal/data"
@@ -66,26 +67,34 @@ func (app *application) createAuthenticationTokenHandler(w http.ResponseWriter, 
 }
 
 func (app *application) verifyTokenHandler(w http.ResponseWriter, r *http.Request) {
-	var input struct {
-		Token string `json:"token"`
-	}
+	w.Header().Add("Vary", "Authorization")
 
-	err := app.readJSON(w, r, &input)
-	if err != nil {
-		app.badRequestResponse(w, r, err)
+	authorizationHeader := r.Header.Get("Authorization")
+
+	if authorizationHeader == "" {
+		r = app.contextSetUser(r, data.AnonymousUser)
+		app.writeJSON(w, http.StatusOK, envelope{"valid": false}, nil)
 		return
 	}
 
+	headerParts := strings.Split(authorizationHeader, " ")
+	if len(headerParts) != 2 || headerParts[0] != "Bearer" {
+		app.invalidCredenttailsResponse(w, r)
+		return
+	}
+
+	token := headerParts[1]
+
 	v := validator.New()
 
-	data.ValidateTokenPlaintext(v, input.Token)
+	data.ValidateTokenPlaintext(v, token)
 
 	if !v.Valid() {
 		app.failedValidationResponse(w, r, v.Errors)
 		return
 	}
 
-	valid, err := app.models.Tokens.ValidateToken(input.Token)
+	valid, err := app.models.Tokens.ValidateToken(token)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return
