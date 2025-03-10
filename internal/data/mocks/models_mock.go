@@ -9,6 +9,5 @@ func TestModels_Mock() data.Models {
 		Movies:      MovieModel_Mock{},
 		Permissions: PermissionModel_Mock{},
 		Tokens:      TokenModel_Mock{},
-		Users:       UserModel_Mock{},
 	}
 }
