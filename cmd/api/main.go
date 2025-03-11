@@ -15,11 +15,14 @@ import (
 
 	"greenlight.isez.dev/internal/data"
 	"greenlight.isez.dev/internal/mailer"
+	"greenlight.isez.dev/internal/vcs"
 
 	_ "github.com/lib/pq"
 )
 
-const version = "1.0.0"
+var (
+	version = vcs.Version()
+)
 
 type config struct {
 	port int
