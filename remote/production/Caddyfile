@@ -1,4 +1,14 @@
 http://164.92.115.211 {
-  respond /debug/* "Not Permitted" 403
-  reverse_proxy localhost:4000
+    encode zstd gzip
+
+    handle /v1/* {
+        reverse_proxy localhost:4000
+    }
+
+    handle {
+        reverse_proxy localhost:3000
+        root * /app/dist
+        try_files {path} /index.html
+        file_server
+    }
 }
