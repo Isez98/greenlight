@@ -1,14 +1,41 @@
-http://164.92.115.211 {
-    encode zstd gzip
+{
+  email isacc1798@gmail.com
+}
 
-    handle /v1/* {
-        reverse_proxy localhost:4000
-    }
+greenlight.isez.dev {
+  encode zstd gzip
+  
+  respond /debug/* "Not Permitted" 403
+  
+  handle /v1/* {
+    reverse_proxy localhost:4000
+  }
 
-    handle {
-        reverse_proxy localhost:3000
-        root * /app/dist
-        try_files {path} /index.html
-        file_server
-    }
+  handle {      
+    reverse_proxy localhost:3000
+    try_files {path} /index.html
+    file_server
+  }
+
+  header {
+    # enable HSTS
+    Strict-Transport-Security max-age=31536000;
+
+    # disable clients from sniffing the media type
+    X-Content-Type-Options nosniff
+
+    # clickjacking protection
+    X-Frame-Options DENY
+
+    # keep referrer data off of HTTP connections
+    Referrer-Policy no-referrer-when-downgrade
+	}
+
+	log {
+		output file /var/log/caddy/greenlight.isez.dev.access.log {
+			roll_size 1gb
+			roll_keep 5
+			roll_keep_for 720h
+		}
+	}
 }
