@@ -19,7 +19,7 @@ Currently this project implements:
 - Go
   - http-router
   - go-mail
-  - real ip
+  - realip
 
 #### Frontend
 
@@ -29,6 +29,11 @@ Currently this project implements:
 - Formik
 - React-Router
 - React Query
+
+## Instructions
+
+1. Set terminal variables with `source ~/.profile`
+2. Run makefile development command with `make run/api`
 
 ## License
 
