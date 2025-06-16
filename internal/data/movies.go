@@ -13,13 +13,14 @@ import (
 )
 
 type Movie struct {
-	ID        int64     `json:"id"`
-	CreatedAt time.Time `json:"-"`
-	Title     string    `json:"title"`
-	Year      int32     `json:"year,omitempty"`
-	Runtime   Runtime   `json:"runtime,omitempty"`
-	Genres    []string  `json:"genres,omitempty"`
-	Version   int32     `json:"version"`
+	ID          int64     `json:"id"`
+	CreatedAt   time.Time `json:"-"`
+	Title       string    `json:"title"`
+	Year        int32     `json:"year,omitempty"`
+	Runtime     Runtime   `json:"runtime,omitempty"`
+	Genres      []string  `json:"genres,omitempty"`
+	Description string    `json:"description,omitempty"`
+	Version     int32     `json:"version"`
 }
 
 type MovieModel struct {
@@ -36,11 +37,11 @@ type MovieModelInterface interface {
 
 func (m MovieModel) Insert(movie *Movie) error {
 	query := `
-		INSERT INTO movies (title, year, runtime, genres)
-		VALUES ($1, $2, $3, $4)
+		INSERT INTO movies (title, year, runtime, genres, description)
+		VALUES ($1, $2, $3, $4, $5)
 		RETURNING id, created_at, version`
 
-	args := []any{movie.Title, movie.Year, movie.Runtime, pq.Array(movie.Genres)}
+	args := []any{movie.Title, movie.Year, movie.Runtime, pq.Array(movie.Genres), movie.Description}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -54,7 +55,7 @@ func (m MovieModel) Get(id int64) (*Movie, error) {
 	}
 
 	query := `
-		SELECT id, created_at, title, year, runtime, genres, version
+		SELECT id, created_at, title, year, runtime, genres, description, version
 		FROM movies
 		WHERE id = $1`
 
@@ -71,6 +72,7 @@ func (m MovieModel) Get(id int64) (*Movie, error) {
 		&movie.Year,
 		&movie.Runtime,
 		pq.Array(&movie.Genres),
+		&movie.Description,
 		&movie.Version,
 	)
 
@@ -89,8 +91,8 @@ func (m MovieModel) Get(id int64) (*Movie, error) {
 func (m MovieModel) Update(movie *Movie) error {
 	query := `
 		UPDATE movies
-		SET title = $1, year = $2, runtime = $3, genres = $4, version = version + 1
-		WHERE id = $5 AND version = $6
+		SET title = $1, year = $2, runtime = $3, genres = $4, description = $5, version = version + 1
+		WHERE id = $6 AND version = $7
 		RETURNING version`
 
 	args := []any{
@@ -98,6 +100,7 @@ func (m MovieModel) Update(movie *Movie) error {
 		movie.Year,
 		movie.Runtime,
 		pq.Array(movie.Genres),
+		movie.Description,
 		movie.ID,
 		movie.Version,
 	}
@@ -210,6 +213,9 @@ func ValidateMovie(v *validator.Validator, movie *Movie) {
 
 	v.Check(movie.Runtime != 0, "runtime", "must be provided")
 	v.Check(movie.Runtime > 0, "runtime", "must be a positive integer")
+
+	v.Check(movie.Description != "", "description", "must be provided")
+	v.Check(len(movie.Description) <= 3500, "title", "must not be more than 3,500 bytes long")
 
 	v.Check(movie.Genres != nil, "gneres", "must be provided")
 	v.Check(len(movie.Genres) >= 1, "genres", "must contain at least 1 genre")
