@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -144,4 +145,12 @@ func (app *application) background(fn func()) {
 
 		fn()
 	}()
+}
+
+func (app *application) strArrToArr(str string) []string {
+	chars := []string{"]", "^", "\\\\", "[", "\"", "(", ")", "-"}
+    r := strings.Join(chars, "")
+	re := regexp.MustCompile("[" + r + "]+")
+	str = re.ReplaceAllString(str, "")
+	return strings.Split(str, ",")
 }

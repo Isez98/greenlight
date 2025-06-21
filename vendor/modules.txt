@@ -1,6 +1,28 @@
+# github.com/cloudinary/cloudinary-go/v2 v2.10.0
+## explicit; go 1.20
+github.com/cloudinary/cloudinary-go/v2
+github.com/cloudinary/cloudinary-go/v2/api
+github.com/cloudinary/cloudinary-go/v2/api/admin
+github.com/cloudinary/cloudinary-go/v2/api/admin/metadata
+github.com/cloudinary/cloudinary-go/v2/api/admin/search
+github.com/cloudinary/cloudinary-go/v2/api/uploader
+github.com/cloudinary/cloudinary-go/v2/asset
+github.com/cloudinary/cloudinary-go/v2/config
+github.com/cloudinary/cloudinary-go/v2/internal/signature
+github.com/cloudinary/cloudinary-go/v2/logger
+github.com/cloudinary/cloudinary-go/v2/transformation
+# github.com/creasty/defaults v1.7.0
+## explicit; go 1.14
+github.com/creasty/defaults
 # github.com/go-mail/mail/v2 v2.3.0
 ## explicit
 github.com/go-mail/mail/v2
+# github.com/google/uuid v1.5.0
+## explicit
+github.com/google/uuid
+# github.com/gorilla/schema v1.4.1
+## explicit; go 1.20
+github.com/gorilla/schema
 # github.com/julienschmidt/httprouter v1.3.0
 ## explicit; go 1.7
 github.com/julienschmidt/httprouter

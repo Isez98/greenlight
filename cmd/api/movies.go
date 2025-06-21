@@ -4,34 +4,77 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 
+	"github.com/cloudinary/cloudinary-go/v2/api"
+	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 	"greenlight.isez.dev/internal/data"
+	image_uploader "greenlight.isez.dev/internal/uploader"
 	"greenlight.isez.dev/internal/validator"
 )
 
 func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Request) {
-	var input struct {
-		Title   	string       `json:"title"`
-		Year    	int32        `json:"year"`
-		Runtime 	data.Runtime `json:"runtime"`
-		Genres  	[]string     `json:"genres"`
-		Description string 		 `json:"description"`
-	}
-
-	err := app.readJSON(w, r, &input)
+	// Extract and Convert values from encoded/form-muultipart
+	// and set them into a data Movie struct
+	err := r.ParseMultipartForm(32 << 20)
 	if err != nil {
-		app.badRequestResponse(w, r, err)
+		app.serverErrorResponse(w, r, err)
 		return
 	}
 
-	movie := &data.Movie{
-		Title:   input.Title,
-		Year:    input.Year,
-		Runtime: input.Runtime,
-		Genres:  input.Genres,
-		Description: input.Description,
+	// FormFile returns the first file for the given key `myFile`
+    // it also returns the FileHeader so we can get the Filename,
+    // the Header and the size of the file
+	file, handler, err := r.FormFile("poster")
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+	defer file.Close()
+
+	cld, ctx := image_uploader.Credentials()
+	savedFile, err := cld.Upload.Upload(ctx, file, uploader.UploadParams{
+		PublicID: handler.Filename,
+		UniqueFilename: api.Bool(false),
+		Overwrite: api.Bool(true),
+	})
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
 	}
 
+	fmt.Printf("Secure URL: %+v\n", savedFile.SecureURL)
+
+	year, err := strconv.ParseInt(r.FormValue("year"), 10, 32)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	parts := strings.Split(r.FormValue("runtime"), " ")
+	if len(parts) != 2 || parts[1] != "mins" {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+	i, err := strconv.ParseInt(parts[0], 10, 32)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	genres := app.strArrToArr(r.FormValue("genres"))
+
+	movie := &data.Movie{
+		Title:   r.FormValue("title"),
+		Year:   int32(year),
+		Runtime: data.Runtime(i),
+		Genres:  genres,
+		Description: r.FormValue("description"),
+		Poster: savedFile.SecureURL,
+	}
+
+	// Validate struct
 	v := validator.New()
 
 	if data.ValidateMovie(v, movie); !v.Valid() {
@@ -39,6 +82,7 @@ func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	// Insert into database
 	err = app.models.Movies.Insert(movie)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
