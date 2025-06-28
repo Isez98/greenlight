@@ -48,6 +48,9 @@ type config struct {
 	cors struct {
 		trustedOrigins []string
 	}
+	cdn struct {
+		uri string
+	}
 }
 
 type application struct {
@@ -79,6 +82,8 @@ func main() {
 	flag.StringVar(&cfg.smtp.username, "smtp-username", "0b23c4503bf901", "SMTP username")
 	flag.StringVar(&cfg.smtp.password, "smtp-password", "f3aa5affb8fef4", "SMTP password")
 	flag.StringVar(&cfg.smtp.sender, "smtp-sender", "Greenlight <no-reply@greenlight.isez.dev>", "SMTP sender")
+
+	flag.StringVar(&cfg.cdn.uri, "cloudinary-uri", os.Getenv("CLOUDINARY_URL"), "Cloudinary CDN URI")
 
 	flag.Func("cors-trusted-origins", "Trusted CORS origins (space separated)", func(val string) error {
 		cfg.cors.trustedOrigins = strings.Fields(val)

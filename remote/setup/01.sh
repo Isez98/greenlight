@@ -14,6 +14,7 @@ USERNAME=greenlight
 
 # Prompt to enter a password for the Postgresql greenlight user
 read -p "Enter password for greenlight DB user: " DB_PASSWORD
+read -p "Enter code for cloudinary: " CLOUDINARY_CODE
 
 # Force all output to be presented in en_US for the duration of this script
 export LC_ALL=en_US.UTF-8
@@ -67,6 +68,7 @@ sudo -i -u postgres psql -d greenlight -c "CREATE ROLE greenlight WITH LOGIN PAS
 # Add a DSN for connecting to the greenlight database to the system-wide environment 
 # variables in the /etc/environment file.
 echo "GREENLIGHT_DB_DSN='postgres://greenlight:${DB_PASSWORD}@localhost/greenlight'" >> /etc/environment
+echo "CLOUDINARY_URL='${CLOUDINARY_CODE}'" >> /etc/environment
 
 # Install Caddy (see https://caddyserver.com/docs/install#debian-ubuntu-raspbian).
 apt install -y debian-keyring debian-archive-keyring apt-transport-https

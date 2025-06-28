@@ -8,7 +8,8 @@ import (
 
 	"github.com/cloudinary/cloudinary-go/v2"
 	"github.com/cloudinary/cloudinary-go/v2/api"
-	"github.com/cloudinary/cloudinary-go/v2/api/admin"
+
+	// "github.com/cloudinary/cloudinary-go/v2/api/admin"
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 )
 
@@ -35,59 +36,59 @@ func UploadImage(cld *cloudinary.Cloudinary, ctx context.Context, filePath, file
     }
 
   // Log the delivery URL
-    fmt.Println("****2. Upload an image****\nDelivery URL:", resp.SecureURL, "\n")
+    fmt.Println("****2. Upload an image****\nDelivery URL:", resp.SecureURL)
     return resp
 }
 
-func getAssetInfo(cld *cloudinary.Cloudinary, ctx context.Context) {
-    // Get and use details of the image
-    // ==============================
-    resp, err := cld.Admin.Asset(ctx, admin.AssetParams{PublicID: "quickstart_butterfly"})
-    if err != nil {
-        fmt.Println("error")
-    }
-    fmt.Println("****3. Get and use details of the image****\nDetailed response:\n", resp, "\n")
+// func getAssetInfo(cld *cloudinary.Cloudinary, ctx context.Context) {
+//     // Get and use details of the image
+//     // ==============================
+//     resp, err := cld.Admin.Asset(ctx, admin.AssetParams{PublicID: "quickstart_butterfly"})
+//     if err != nil {
+//         fmt.Println("error")
+//     }
+//     fmt.Println("****3. Get and use details of the image****\nDetailed response:\n", resp, "\n")
 
-    // Assign tags to the uploaded image based on its width. Save the response to the update in the variable 'update_resp'.
-    if resp.Width > 900 {
-        update_resp, err := cld.Admin.UpdateAsset(ctx, admin.UpdateAssetParams{
-            PublicID: "quickstart_butterfly",
-            Tags:     []string{"large"}})
-        if err != nil {
-            fmt.Println("error")
-        } else {
-            // Log the new tag to the console.
-            fmt.Println("New tag: ", update_resp.Tags, "\n")
-        }
-    } else {
-        update_resp, err := cld.Admin.UpdateAsset(ctx, admin.UpdateAssetParams{
-            PublicID: "quickstart_butterfly",
-            Tags:     []string{"small"}})
-        if err != nil {
-            fmt.Println("error")
-        } else {
-            // Log the new tag to the console.
-            fmt.Println("New tag: ", update_resp.Tags, "\n")
-        }
-    }
+//     // Assign tags to the uploaded image based on its width. Save the response to the update in the variable 'update_resp'.
+//     if resp.Width > 900 {
+//         update_resp, err := cld.Admin.UpdateAsset(ctx, admin.UpdateAssetParams{
+//             PublicID: "quickstart_butterfly",
+//             Tags:     []string{"large"}})
+//         if err != nil {
+//             fmt.Println("error")
+//         } else {
+//             // Log the new tag to the console.
+//             fmt.Println("New tag: ", update_resp.Tags, "\n")
+//         }
+//     } else {
+//         update_resp, err := cld.Admin.UpdateAsset(ctx, admin.UpdateAssetParams{
+//             PublicID: "quickstart_butterfly",
+//             Tags:     []string{"small"}})
+//         if err != nil {
+//             fmt.Println("error")
+//         } else {
+//             // Log the new tag to the console.
+//             fmt.Println("New tag: ", update_resp.Tags, "\n")
+//         }
+//     }
 
-}
+// }
 
-func transformImage(cld *cloudinary.Cloudinary, ctx context.Context) {
-    // Instantiate an object for the asset with public ID "my_image"
-    qs_img, err := cld.Image("quickstart_butterfly")
-    if err != nil {
-        fmt.Println("error")
-    }
+// func transformImage(cld *cloudinary.Cloudinary, ctx context.Context) {
+//     // Instantiate an object for the asset with public ID "my_image"
+//     qs_img, err := cld.Image("quickstart_butterfly")
+//     if err != nil {
+//         fmt.Println("error")
+//     }
 
-    // Add the transformation
-    qs_img.Transformation = "r_max/e_sepia"
+//     // Add the transformation
+//     qs_img.Transformation = "r_max/e_sepia"
 
-    // Generate and log the delivery URL
-    new_url, err := qs_img.String()
-    if err != nil {
-        fmt.Println("error")
-    } else {
-        print("****4. Transform the image****\nTransfrmation URL: ", new_url, "\n")
-    }
-}
+//     // Generate and log the delivery URL
+//     new_url, err := qs_img.String()
+//     if err != nil {
+//         fmt.Println("error")
+//     } else {
+//         print("****4. Transform the image****\nTransfrmation URL: ", new_url, "\n")
+//     }
+// }
