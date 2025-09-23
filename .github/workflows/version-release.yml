@@ -60,7 +60,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.bump.outputs.new_tag }}
-          name: ${{github.repository}}@${{ steps.bump.outputs.new_tag }}
+          name: ${repo_name}@${{ steps.bump.outputs.new_tag }}
           body: |
             Automated release for ${{ steps.bump.outputs.new_tag }}
           files: ${{ steps.zip.outputs.zip_name }}
