@@ -11,12 +11,22 @@ import (
 	"strconv"
 	"strings"
 
+	"greenlight.isez.dev/internal/data"
 	"greenlight.isez.dev/internal/validator"
 
 	"github.com/julienschmidt/httprouter"
 )
 
 type envelope map[string]any
+
+type MovieForm struct {
+	Title   	*string       
+	Year    	*int32        
+	Runtime 	*data.Runtime 
+	Genres  	*[]string     
+	Description *string		  
+	Poster *string
+}
 
 func (app *application) readIDParam(r *http.Request) (int64, error) {
 	params := httprouter.ParamsFromContext(r.Context())
@@ -92,6 +102,38 @@ func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst any
 		return errors.New("body must only contain a single JSON value")
 	}
 
+	return nil
+}
+
+func (app *application) readForm(w http.ResponseWriter, r *http.Request) error {
+	var dst MovieForm
+	/// title
+	*dst.Title = r.FormValue("title")
+	year, err := strconv.ParseInt(r.FormValue("year"), 10, 32)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return nil
+	}
+	/// year
+	*dst.Year = int32(year)
+	/// runtime
+	parts := strings.Split(r.FormValue("runtime"), " ")
+	if len(parts) != 2 || parts[1] != "mins" {
+		app.serverErrorResponse(w, r, err)
+		return nil
+	}
+	i, err := strconv.ParseInt(parts[0], 10, 32)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return nil
+	}
+	*dst.Runtime = data.Runtime(i)
+	/// genres
+	*dst.Genres = app.strArrToArr(r.FormValue("genres"))
+	/// description
+	*dst.Description = r.FormValue("description")
+	/// poster
+	*dst.Poster = r.FormValue("poster")
 	return nil
 }
 

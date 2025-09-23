@@ -140,13 +140,19 @@ func (app *application) updateMovieHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	var input struct {
-		Title   	*string       `json:"title"`
-		Year    	*int32        `json:"year"`
-		Runtime 	*data.Runtime `json:"runtime"`
-		Genres  	*[]string      `json:"genres"`
-		Description *string		  `json:"description"`
+	/// Parse the form
+	err = r.ParseMultipartForm(32 << 20)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
 	}
+
+	file, handler, err := r.FormFile("poster")
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+	defer file.Close()
 
 	err = app.readJSON(w, r, &input)
 	if err != nil {
@@ -172,6 +178,11 @@ func (app *application) updateMovieHandler(w http.ResponseWriter, r *http.Reques
 
 	if input.Description != nil {
 		movie.Description = *input.Description
+	}
+
+	if input.Poster != nil && input.Poster != &movie.Poster {
+		/// delete old poster and replace with new poster functionality goes here
+		movie.Poster = *input.Poster
 	}
 
 	v := validator.New()
