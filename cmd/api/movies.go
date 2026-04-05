@@ -3,49 +3,41 @@ package main
 import (
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/cloudinary/cloudinary-go/v2/api"
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
+	"github.com/google/uuid"
 	"greenlight.isez.dev/internal/data"
 	image_uploader "greenlight.isez.dev/internal/uploader"
 	"greenlight.isez.dev/internal/validator"
 )
 
 func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Request) {
-	// Extract and Convert values from encoded/form-muultipart
-	// and set them into a data Movie struct
-	err := r.ParseMultipartForm(32 << 20)
-	if err != nil {
-		app.serverErrorResponse(w, r, err)
-		return
-	}
+	r.ParseMultipartForm(32 << 20)
 
-	// FormFile returns the first file for the given key `myFile`
-    // it also returns the FileHeader so we can get the Filename,
-    // the Header and the size of the file
-	file, handler, err := r.FormFile("poster")
+	file, _, err := r.FormFile("poster")
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return
 	}
 	defer file.Close()
 
-	cld, ctx := image_uploader.Credentials()
-	savedFile, err := cld.Upload.Upload(ctx, file, uploader.UploadParams{
-		PublicID: handler.Filename,
-		UniqueFilename: api.Bool(false),
-		Overwrite: api.Bool(true),
-	})
-	if err != nil {
-		app.serverErrorResponse(w, r, err)
+	// 1. Validate MIME type BEFORE uploading
+	buf := make([]byte, 512)
+	file.Read(buf)
+	mimeType := http.DetectContentType(buf)
+	if !strings.HasPrefix(mimeType, "image/") {
+		app.badRequestResponse(w, r, errors.New("poster must be an image"))
 		return
 	}
+	file.Seek(0, io.SeekStart) // reset after reading
 
-	fmt.Printf("Secure URL: %+v\n", savedFile.SecureURL)
-
+	// 2. Validate text fields first
 	year, err := strconv.ParseInt(r.FormValue("year"), 10, 32)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
@@ -66,23 +58,35 @@ func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Reques
 	genres := app.strArrToArr(r.FormValue("genres"))
 
 	movie := &data.Movie{
-		Title:   r.FormValue("title"),
-		Year:   int32(year),
-		Runtime: data.Runtime(i),
-		Genres:  genres,
+		Title:       r.FormValue("title"),
+		Year:        int32(year),
+		Runtime:     data.Runtime(i),
+		Genres:      genres,
 		Description: r.FormValue("description"),
-		Poster: savedFile.SecureURL,
+		Poster:      "",
 	}
 
 	// Validate struct
 	v := validator.New()
-
 	if data.ValidateMovie(v, movie); !v.Valid() {
 		app.failedValidationResponse(w, r, v.Errors)
 		return
 	}
 
-	// Insert into database
+	// 3. Only now upload, with a server-generated public ID
+	publicID := fmt.Sprintf("posters/%d_%s", time.Now().UnixNano(), uuid.New().String())
+	cld, ctx := image_uploader.Credentials()
+	savedFile, err := cld.Upload.Upload(ctx, file, uploader.UploadParams{
+		PublicID:       publicID, // not handler.Filename
+		UniqueFilename: api.Bool(false),
+		Overwrite:      api.Bool(false),
+	})
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	movie.Poster = savedFile.SecureURL
 	err = app.models.Movies.Insert(movie)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
@@ -147,12 +151,21 @@ func (app *application) updateMovieHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	file, handler, err := r.FormFile("poster")
+	file, _, err := r.FormFile("poster")
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return
 	}
 	defer file.Close()
+
+	var input struct {
+		Title       *string
+		Year        *int32
+		Runtime     *data.Runtime
+		Genres      *[]string
+		Description *string
+		Poster      *string
+	}
 
 	err = app.readJSON(w, r, &input)
 	if err != nil {
@@ -180,7 +193,7 @@ func (app *application) updateMovieHandler(w http.ResponseWriter, r *http.Reques
 		movie.Description = *input.Description
 	}
 
-	if input.Poster != nil && input.Poster != &movie.Poster {
+	if *input.Poster != movie.Poster {
 		/// delete old poster and replace with new poster functionality goes here
 		movie.Poster = *input.Poster
 	}
