@@ -7,5 +7,6 @@ CREATE TABLE IF NOT EXISTS movies (
   genres text[] NOT NULL,
   description text NOT NULL,
   poster text NOT NULL,
+  poster_id text NOT NULL DEFAULT '',
   version integer NOT NULL DEFAULT 1
 );

@@ -17,7 +17,10 @@ import (
 )
 
 func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Request) {
-	r.ParseMultipartForm(32 << 20)
+	if err := r.ParseMultipartForm(32 << 20); err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
 
 	file, _, err := r.FormFile("poster")
 	if err != nil {
@@ -81,6 +84,7 @@ func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	movie.Poster = savedFile.SecureURL
+	movie.PosterID = savedFile.PublicID
 	err = app.models.Movies.Insert(movie)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
@@ -145,20 +149,51 @@ func (app *application) updateMovieHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	input := &data.Movie{
+		ID:          movie.ID,
+		Title:       movie.Title,
+		Year:        movie.Year,
+		Runtime:     movie.Runtime,
+		Genres:      movie.Genres,
+		Description: movie.Description,
+		Poster:      movie.Poster,
+		PosterID:    movie.PosterID,
+		Version:     movie.Version,
+	}
+
 	file, _, err := r.FormFile("poster")
-	if err != nil {
+	if err != nil && !errors.Is(err, http.ErrMissingFile) {
 		app.serverErrorResponse(w, r, err)
 		return
 	}
-	defer file.Close()
+	if file != nil {
+		defer file.Close()
 
-	var input struct {
-		Title       *string
-		Year        *int32
-		Runtime     *data.Runtime
-		Genres      *[]string
-		Description *string
-		Poster      *string
+		// MIME check
+		buf := make([]byte, 512)
+		file.Read(buf)
+		if !strings.HasPrefix(http.DetectContentType(buf), "image/") {
+			app.badRequestResponse(w, r, errors.New("poster must be an image"))
+			return
+		}
+		file.Seek(0, io.SeekStart)
+
+		cld, ctx := image_uploader.Credentials()
+		_, err = cld.Upload.Destroy(ctx, uploader.DestroyParams{PublicID: movie.PosterID})
+		if err != nil {
+			app.serverErrorResponse(w, r, err)
+			return
+		}
+		newPublicID := fmt.Sprintf("posters/%d_%s", time.Now().UnixNano(), uuid.New().String())
+		savedFile, err := cld.Upload.Upload(ctx, file, uploader.UploadParams{
+			PublicID: newPublicID, UniqueFilename: api.Bool(false), Overwrite: api.Bool(false),
+		})
+		if err != nil {
+			app.serverErrorResponse(w, r, err)
+			return
+		}
+		input.Poster = savedFile.SecureURL
+		input.PosterID = savedFile.PublicID
 	}
 
 	form, err := app.readMovieForm(r)
@@ -168,29 +203,29 @@ func (app *application) updateMovieHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	if form.Title != nil {
-		input.Title = form.Title
+		input.Title = *form.Title
 	}
 	if form.Year != nil {
-		input.Year = form.Year
+		input.Year = *form.Year
 	}
 	if form.Runtime != nil {
-		input.Runtime = form.Runtime
+		input.Runtime = *form.Runtime
 	}
 	if form.Genres != nil {
-		input.Genres = form.Genres
+		input.Genres = *form.Genres
 	}
 	if form.Description != nil {
-		input.Description = form.Description
+		input.Description = *form.Description
 	}
 
 	v := validator.New()
 
-	if data.ValidateMovie(v, movie); !v.Valid() {
+	if data.ValidateMovie(v, input); !v.Valid() {
 		app.failedValidationResponse(w, r, v.Errors)
 		return
 	}
 
-	err = app.models.Movies.Update(movie)
+	err = app.models.Movies.Update(input)
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrEditConflict):
@@ -201,7 +236,7 @@ func (app *application) updateMovieHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	err = app.writeJSON(w, http.StatusOK, envelope{"movie": movie}, nil)
+	err = app.writeJSON(w, http.StatusOK, envelope{"movie": input}, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
@@ -214,6 +249,14 @@ func (app *application) deleteMovieHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	movie, err := app.models.Movies.Get(id)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	cld, ctx := image_uploader.Credentials()
+	cld.Upload.Destroy(ctx, uploader.DestroyParams{PublicID: movie.PosterID})
 	err = app.models.Movies.Delete(id)
 	if err != nil {
 		switch {

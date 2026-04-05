@@ -21,6 +21,7 @@ type Movie struct {
 	Genres      []string  `json:"genres,omitempty"`
 	Description string    `json:"description,omitempty"`
 	Poster      string    `json:"poster,omitempty"`
+	PosterID    string    `json:"poster_id,omitempty"`
 	Version     int32     `json:"version"`
 }
 
@@ -38,11 +39,11 @@ type MovieModelInterface interface {
 
 func (m MovieModel) Insert(movie *Movie) error {
 	query := `
-		INSERT INTO movies (title, year, runtime, genres, description, poster)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO movies (title, year, runtime, genres, description, poster, poster_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		RETURNING id, created_at, version`
 
-	args := []any{movie.Title, movie.Year, movie.Runtime, pq.Array(movie.Genres), movie.Description, movie.Poster}
+	args := []any{movie.Title, movie.Year, movie.Runtime, pq.Array(movie.Genres), movie.Description, movie.Poster, movie.PosterID}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -56,7 +57,7 @@ func (m MovieModel) Get(id int64) (*Movie, error) {
 	}
 
 	query := `
-		SELECT id, created_at, title, year, runtime, genres, description, poster, version
+		SELECT id, created_at, title, year, runtime, genres, description, poster, poster_id, version
 		FROM movies
 		WHERE id = $1`
 
@@ -75,6 +76,7 @@ func (m MovieModel) Get(id int64) (*Movie, error) {
 		pq.Array(&movie.Genres),
 		&movie.Description,
 		&movie.Poster,
+		&movie.PosterID,
 		&movie.Version,
 	)
 
@@ -93,8 +95,8 @@ func (m MovieModel) Get(id int64) (*Movie, error) {
 func (m MovieModel) Update(movie *Movie) error {
 	query := `
 		UPDATE movies
-		SET title = $1, year = $2, runtime = $3, genres = $4, description = $5, poster = $6, version = version + 1
-		WHERE id = $7 AND version = $8
+		SET title = $1, year = $2, runtime = $3, genres = $4, description = $5, poster = $6, poster_id = $7, version = version + 1
+		WHERE id = $8 AND version = $9
 		RETURNING version`
 
 	args := []any{
@@ -103,8 +105,9 @@ func (m MovieModel) Update(movie *Movie) error {
 		movie.Runtime,
 		pq.Array(movie.Genres),
 		movie.Description,
-		movie.ID,
 		movie.Poster,
+		movie.PosterID,
+		movie.ID,
 		movie.Version,
 	}
 
@@ -155,7 +158,7 @@ func (m MovieModel) Delete(id int64) error {
 
 func (m MovieModel) GetAll(title string, genres []string, filters Filters) ([]*Movie, Metadata, error) {
 	query := fmt.Sprintf(`
-		SELECT count(*) OVER(), id, created_at, title, year, runtime, genres, poster, version
+		SELECT count(*) OVER(), id, created_at, title, year, runtime, genres, poster, poster_id, version
 		FROM movies
 		WHERE (to_tsvector('simple', title) @@ plainto_tsquery('simple', $1) OR $1 = '')
 		AND (genres @> $2 OR $2 = '{}')
@@ -189,6 +192,7 @@ func (m MovieModel) GetAll(title string, genres []string, filters Filters) ([]*M
 			&movie.Runtime,
 			pq.Array(&movie.Genres),
 			&movie.Poster,
+			&movie.PosterID,
 			&movie.Version,
 		)
 		if err != nil {
@@ -220,8 +224,6 @@ func ValidateMovie(v *validator.Validator, movie *Movie) {
 
 	v.Check(movie.Description != "", "description", "must be provided")
 	v.Check(len(movie.Description) <= 3500, "description", "must not be more than 3,500 bytes long")
-
-	v.Check(movie.Poster != "", "poster", "must be provided")
 
 	v.Check(movie.Genres != nil, "genres", "must be provided")
 	v.Check(len(movie.Genres) >= 1, "genres", "must contain at least 1 genre")
