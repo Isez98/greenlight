@@ -103,7 +103,7 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 
 		headerParts := strings.Split(authorizationHeader, " ")
 		if len(headerParts) != 2 || headerParts[0] != "Bearer" {
-			app.invalidCredenttailsResponse(w, r)
+			app.invalidCredentialsResponse(w, r)
 			return
 		}
 
@@ -112,7 +112,7 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 		v := validator.New()
 
 		if data.ValidateTokenPlaintext(v, token); !v.Valid() {
-			app.invalidCredenttailsResponse(w, r)
+			app.invalidCredentialsResponse(w, r)
 			return
 		}
 

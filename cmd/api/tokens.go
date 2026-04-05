@@ -36,7 +36,7 @@ func (app *application) createAuthenticationTokenHandler(w http.ResponseWriter, 
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
-			app.invalidCredenttailsResponse(w, r)
+			app.invalidCredentialsResponse(w, r)
 		default:
 			app.serverErrorResponse(w, r, err)
 		}
@@ -50,7 +50,7 @@ func (app *application) createAuthenticationTokenHandler(w http.ResponseWriter, 
 	}
 
 	if !match {
-		app.invalidCredenttailsResponse(w, r)
+		app.invalidCredentialsResponse(w, r)
 		return
 	}
 
@@ -79,7 +79,7 @@ func (app *application) verifyTokenHandler(w http.ResponseWriter, r *http.Reques
 
 	headerParts := strings.Split(authorizationHeader, " ")
 	if len(headerParts) != 2 || headerParts[0] != "Bearer" {
-		app.invalidCredenttailsResponse(w, r)
+		app.invalidCredentialsResponse(w, r)
 		return
 	}
 
