@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -38,32 +37,27 @@ func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Reques
 	file.Seek(0, io.SeekStart) // reset after reading
 
 	// 2. Validate text fields first
-	year, err := strconv.ParseInt(r.FormValue("year"), 10, 32)
+	form, err := app.readMovieForm(r)
 	if err != nil {
-		app.serverErrorResponse(w, r, err)
+		app.badRequestResponse(w, r, err)
 		return
 	}
 
-	parts := strings.Split(r.FormValue("runtime"), " ")
-	if len(parts) != 2 || parts[1] != "mins" {
-		app.serverErrorResponse(w, r, err)
-		return
+	movie := &data.Movie{}
+	if form.Title != nil {
+		movie.Title = *form.Title
 	}
-	i, err := strconv.ParseInt(parts[0], 10, 32)
-	if err != nil {
-		app.serverErrorResponse(w, r, err)
-		return
+	if form.Year != nil {
+		movie.Year = *form.Year
 	}
-
-	genres := app.strArrToArr(r.FormValue("genres"))
-
-	movie := &data.Movie{
-		Title:       r.FormValue("title"),
-		Year:        int32(year),
-		Runtime:     data.Runtime(i),
-		Genres:      genres,
-		Description: r.FormValue("description"),
-		Poster:      "",
+	if form.Runtime != nil {
+		movie.Runtime = *form.Runtime
+	}
+	if form.Genres != nil {
+		movie.Genres = *form.Genres
+	}
+	if form.Description != nil {
+		movie.Description = *form.Description
 	}
 
 	// Validate struct
@@ -167,35 +161,26 @@ func (app *application) updateMovieHandler(w http.ResponseWriter, r *http.Reques
 		Poster      *string
 	}
 
-	err = app.readJSON(w, r, &input)
+	form, err := app.readMovieForm(r)
 	if err != nil {
 		app.badRequestResponse(w, r, err)
 		return
 	}
 
-	if input.Title != nil {
-		movie.Title = *input.Title
+	if form.Title != nil {
+		input.Title = form.Title
 	}
-
-	if input.Year != nil {
-		movie.Year = *input.Year
+	if form.Year != nil {
+		input.Year = form.Year
 	}
-
-	if input.Runtime != nil {
-		movie.Runtime = *input.Runtime
+	if form.Runtime != nil {
+		input.Runtime = form.Runtime
 	}
-
-	if input.Genres != nil {
-		movie.Genres = *input.Genres
+	if form.Genres != nil {
+		input.Genres = form.Genres
 	}
-
-	if input.Description != nil {
-		movie.Description = *input.Description
-	}
-
-	if *input.Poster != movie.Poster {
-		/// delete old poster and replace with new poster functionality goes here
-		movie.Poster = *input.Poster
+	if form.Description != nil {
+		input.Description = form.Description
 	}
 
 	v := validator.New()

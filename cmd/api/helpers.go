@@ -20,12 +20,11 @@ import (
 type envelope map[string]any
 
 type MovieForm struct {
-	Title   	*string       
-	Year    	*int32        
-	Runtime 	*data.Runtime 
-	Genres  	*[]string     
-	Description *string		  
-	Poster *string
+	Title       *string
+	Year        *int32
+	Runtime     *data.Runtime
+	Genres      *[]string
+	Description *string
 }
 
 func (app *application) readIDParam(r *http.Request) (int64, error) {
@@ -105,36 +104,45 @@ func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst any
 	return nil
 }
 
-func (app *application) readForm(w http.ResponseWriter, r *http.Request) error {
-	var dst MovieForm
+func (app *application) readMovieForm(r *http.Request) (MovieForm, error) {
+	var form MovieForm
 	/// title
-	*dst.Title = r.FormValue("title")
-	year, err := strconv.ParseInt(r.FormValue("year"), 10, 32)
-	if err != nil {
-		app.serverErrorResponse(w, r, err)
-		return nil
+	if title := r.FormValue("title"); title != "" {
+		form.Title = &title
 	}
-	/// year
-	*dst.Year = int32(year)
+
+	if yearStr := r.FormValue("year"); yearStr != "" {
+		year, err := strconv.ParseInt(yearStr, 10, 32)
+		if err != nil {
+			return form, fmt.Errorf("year must be an integer value")
+		}
+		y := int32(year)
+		form.Year = &y
+	}
+
 	/// runtime
-	parts := strings.Split(r.FormValue("runtime"), " ")
-	if len(parts) != 2 || parts[1] != "mins" {
-		app.serverErrorResponse(w, r, err)
-		return nil
+	if runtimeStr := r.FormValue("runtime"); runtimeStr != "" {
+		parts := strings.Split(runtimeStr, " ")
+		if len(parts) != 2 || parts[1] != "mins" {
+			return form, fmt.Errorf("runtime must be in the format '<number> mins'")
+		}
+		i, err := strconv.ParseInt(parts[0], 10, 32)
+		if err != nil {
+			return form, fmt.Errorf("runtime must be an integer value")
+		}
+		r := data.Runtime(i)
+		form.Runtime = &r
 	}
-	i, err := strconv.ParseInt(parts[0], 10, 32)
-	if err != nil {
-		app.serverErrorResponse(w, r, err)
-		return nil
-	}
-	*dst.Runtime = data.Runtime(i)
 	/// genres
-	*dst.Genres = app.strArrToArr(r.FormValue("genres"))
+	if genresStr := r.FormValue("genres"); genresStr != "" {
+		genres := app.strArrToArr(genresStr)
+		form.Genres = &genres
+	}
 	/// description
-	*dst.Description = r.FormValue("description")
-	/// poster
-	*dst.Poster = r.FormValue("poster")
-	return nil
+	if description := r.FormValue("description"); description != "" {
+		form.Description = &description
+	}
+	return form, nil
 }
 
 func (app *application) readString(qs url.Values, key string, defaultValue string) string {
@@ -191,7 +199,7 @@ func (app *application) background(fn func()) {
 
 func (app *application) strArrToArr(str string) []string {
 	chars := []string{"]", "^", "\\\\", "[", "\"", "(", ")", "-"}
-    r := strings.Join(chars, "")
+	r := strings.Join(chars, "")
 	re := regexp.MustCompile("[" + r + "]+")
 	str = re.ReplaceAllString(str, "")
 	return strings.Split(str, ",")
