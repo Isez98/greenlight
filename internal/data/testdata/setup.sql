@@ -5,6 +5,9 @@ CREATE TABLE IF NOT EXISTS movies (
   year integer NOT NULL,
   runtime integer NOT NULL,
   genres text[] NOT NULL,
+  description text NOT NULL DEFAULT '',
+  poster text NOT NULL DEFAULT '',
+  poster_id text NOT NULL DEFAULT '',
   version integer NOT NULL DEFAULT 1
 );
 
@@ -50,13 +53,18 @@ CREATE TABLE IF NOT EXISTS users_permissions (
   PRIMARY KEY (user_id, permission_id)
 );
 
-INSERT INTO permissions (code) VALUES ('movies:read'), ('movies:write');
+INSERT INTO permissions (code) VALUES ('movies:read'), ('movies:write')
+  ON CONFLICT DO NOTHING;
 
-INSERT INTO movies (title, year, runtime, genres, version) VALUES (
+DELETE FROM movies;
+INSERT INTO movies (title, year, runtime, genres, description, poster, poster_id, version) VALUES (
   'Black Panther',
   2018,
-  '134',
+  134,
   '{"action", "adventure"}',
+  'A superhero film set in the fictional African nation of Wakanda.',
+  '',
+  '',
   1
 );
 

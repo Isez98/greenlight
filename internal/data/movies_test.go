@@ -1,49 +1,56 @@
 package data
 
 import (
-	"fmt"
 	"testing"
 
 	"greenlight.isez.dev/internal/assert"
 )
 
-func TestListMoviesHandler(t *testing.T) {
+func TestMovieModel_GetAll(t *testing.T) {
+	filters := Filters{
+		Page:         1,
+		PageSize:     20,
+		Sort:         "id",
+		SortSafeList: []string{"id", "title", "year", "runtime"},
+	}
+
 	tests := []struct {
-		name    string
-		movieID int
-		want    []Movie
+		name      string
+		title     string
+		wantCount int
+		wantTitle string
 	}{
 		{
-			name:    "Valid ID",
-			movieID: 1,
-			want: []Movie{
-				{
-					Title:   "Black Panther",
-					Year:    2018,
-					Runtime: 134,
-					Genres:  []string{"action", "adventure"},
-					Version: 1,
-				},
-			},
-		}, {
-			name:    "Zero ID",
-			movieID: 0,
-			want:    []Movie{},
+			name:      "Found by title",
+			title:     "Black",
+			wantCount: 1,
+			wantTitle: "Black Panther",
+		},
+		{
+			name:      "Not found",
+			title:     "Nonexistent",
+			wantCount: 0,
+		},
+		{
+			name:      "Empty filter returns all",
+			title:     "",
+			wantCount: 1,
+			wantTitle: "Black Panther",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			db := newTestDB(t)
-
 			m := MovieModel{DB: db}
 
-			movies, _, err := m.GetAll("Black", []string{""}, Filters{Page: 1, PageSize: 20, Sort: "id", SortSafeList: []string{"id", "title", "year", "runtime"}})
+			movies, _, err := m.GetAll(tt.title, []string{}, filters)
 
-			// assert.Equal(t, movies[0].Title, tt.want[0].Title)
-			// assert.StringContains(t, movies, "Black")
-			fmt.Println(movies)
 			assert.NilError(t, err)
+			assert.Equal(t, len(movies), tt.wantCount)
+			if tt.wantTitle != "" {
+				assert.Equal(t, movies[0].Title, tt.wantTitle)
+			}
 		})
 	}
 }

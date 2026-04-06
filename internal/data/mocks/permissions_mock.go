@@ -11,9 +11,7 @@ type PermissionModel_Mock struct {
 }
 
 func (m PermissionModel_Mock) GetAllForUser(userID int64) (data.Permissions, error) {
-	var permissions data.Permissions
-	permissions[0] = ""
-	return permissions, nil
+	return data.Permissions{"movies:read"}, nil
 }
 
 func (m PermissionModel_Mock) AddForUser(userID int64, codes ...string) error {

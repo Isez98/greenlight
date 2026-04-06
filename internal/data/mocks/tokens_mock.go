@@ -39,10 +39,13 @@ func generateToken(userID int64, ttl time.Duration, scope string) (*data.Token, 
 func (m TokenModel_Mock) New(userID int64, ttl time.Duration, scope string) (*data.Token, error) {
 	token, err := generateToken(userID, ttl, scope)
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
 
 	err = m.Insert(token)
+	if err != nil {
+		return nil, err
+	}
 	return token, nil
 }
 

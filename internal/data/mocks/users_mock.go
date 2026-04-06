@@ -43,6 +43,19 @@ func (m UserModel_Mock) GetForToken(tokenscope string, TokenPlaintext string) (*
 	return &mockUser, nil
 }
 
+func (m UserModel_Mock) GetByToken(TokenPlaintext string) (*data.User, error) {
+	mockUser := data.User{
+		ID:        1,
+		Name:      "John Doe",
+		Email:     "john@example.com",
+		CreatedAt: time.Now(),
+		Activated: true,
+		Version:   1,
+		Password:  data.AnonymousUser.Password,
+	}
+	return &mockUser, nil
+}
+
 func (m UserModel_Mock) Insert(user *data.User) error {
 	switch user.Email {
 	case "dupe@example.com":
